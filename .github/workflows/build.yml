@@ -37,3 +37,4 @@ jobs:
           path: |
             .pio/build/hb-rf-eth/firmware.bin
             .pio/build/hb-rf-eth/*.bin
+            .pio/build/hb-rf-eth/*.elf
