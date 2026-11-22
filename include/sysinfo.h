@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 typedef enum
 {
     BOARD_TYPE_REV_1_8_PUB = 0,
@@ -37,4 +39,12 @@ public:
     const char* getCurrentVersion();
     const char *getSerialNumber();
     board_type_t getBoardType();
+
+    // Reason of the last reset, e.g. "poweron", "brownout", "panic", "int_wdt",
+    // "software" or "webui" (restart requested through the WebUI)
+    const char *getResetReason();
+    // Number of boots since the last factory reset
+    uint32_t getBootCount();
+    // Restarts the module, the reset reason of the next boot will be "webui"
+    void restart();
 };

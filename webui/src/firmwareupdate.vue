@@ -1,4 +1,5 @@
 <template>
+  <div>
   <b-card
     :header="$t('title')"
     header-tag="h6"
@@ -66,10 +67,14 @@
       </b-form-group>
     </b-form>
   </b-card>
+  <reboot></reboot>
+  </div>
 </template>
 
 <script>
 import Vue from "vue";
+
+import Reboot from "./reboot.vue";
 
 import VueI18n from "vue-i18n";
 Vue.use(VueI18n);
@@ -96,6 +101,9 @@ import { CardPlugin } from "bootstrap-vue/esm/components/card";
 Vue.use(CardPlugin);
 
 export default {
+  components: {
+    Reboot
+  },
   name: "FirmwareUpdate",
   data() {
     return {

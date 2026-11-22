@@ -69,6 +69,9 @@ const moduleSysInfo = {
     currentVersion: "",
     latestVersion: "",
     rawUartRemoteAddress: "",
+    uptime: 0,
+    resetReason: "",
+    bootCount: 0,
     memoryUsage: 0.0,
     cpuUsage: 0.0,
     radioModuleType: "",
@@ -83,6 +86,9 @@ const moduleSysInfo = {
       state.currentVersion = newState.currentVersion;
       state.latestVersion = newState.latestVersion;
       state.rawUartRemoteAddress = newState.rawUartRemoteAddress;
+      state.uptime = newState.uptime;
+      state.resetReason = newState.resetReason;
+      state.bootCount = newState.bootCount;
       state.memoryUsage = newState.memoryUsage;
       state.cpuUsage = newState.cpuUsage;
       state.radioModuleType = newState.radioModuleType;
@@ -106,6 +112,21 @@ const moduleSysInfo = {
             () => {
               reject();
             });
+      });
+    }
+  }
+};
+
+const moduleDevice = {
+  namespaced: true,
+  actions: {
+    reboot() {
+      return new Promise((resolve, reject) => {
+        Axios
+          .post("/reboot.json")
+          .then(
+            () => { resolve(); },
+            () => { reject(); });
       });
     }
   }
@@ -234,6 +255,7 @@ const store = new Vuex.Store({
   modules: {
     login: moduleLogin,
     sysInfo: moduleSysInfo,
+    device: moduleDevice,
     settings: moduleSettings,
     firmwareUpdate: moduleFirmwareUpdate,
   }
@@ -277,7 +299,8 @@ Axios.interceptors.request.use(
 Axios.interceptors.response.use(
   response => { return response; },
   error => {
-    if (error.response.status == 401) {
+    // error.response is undefined if the device is not reachable (e.g. while rebooting)
+    if (error.response && error.response.status == 401) {
       store.dispatch("login/logout");
       router.go();
     }

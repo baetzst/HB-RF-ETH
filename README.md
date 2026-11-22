@@ -52,6 +52,8 @@ Der Status kann ohne Anmeldung per `GET http://<hb-rf-eth>/api/v1/status` als JS
     "firmwareVersion": "1.3.1",
     "latestFirmwareVersion": "1.3.1",
     "uptime": 86400,
+    "resetReason": "poweron",
+    "bootCount": 12,
     "cpuUsage": 1.95,
     "memoryUsage": 41.71,
     "ipAddress": "192.168.20.10"
@@ -73,6 +75,8 @@ Der Status kann ohne Anmeldung per `GET http://<hb-rf-eth>/api/v1/status` als JS
 ```
 
 * `uptime` in Sekunden, `cpuUsage` und `memoryUsage` in Prozent
+* `resetReason` ist der Grund des letzten Neustarts: `poweron`, `brownout` (Spannungseinbruch), `panic` (Absturz der Firmware), `int_wdt`, `task_wdt`, `wdt` (Watchdog), `software` (Neustart durch die Firmware), `webui` (Neustart über die WebUI), `external` (Reset-Pin)
+* `bootCount` zählt die Neustarts seit dem letzten Werksreset
 * `ccu.connected` ist `true`, solange eine CCU (debmatic / piVCCU3) per raw-uart verbunden ist, `ccu.address` ist dann ihre IP Adresse
 
 ### MQTT
@@ -86,6 +90,9 @@ MQTT wird in der WebUI unter Einstellungen aktiviert (Broker, Port, optional Ben
 Der Präfix ist standardmäßig `hb-rf-eth/<Seriennummer>`. Der Status wird im eingestellten Intervall (Standard 60 Sekunden) und zusätzlich sofort bei einer Verbindung oder Trennung der CCU gesendet.
 
 Ist die Home Assistant Discovery aktiv, werden unter `homeassistant/...` Konfigurationen gesendet, sodass Home Assistant das HB-RF-ETH automatisch als Gerät mit Sensoren (u.a. CCU verbunden, Funkmodultyp, Seriennummer, Funkadressen, SGTIN, CPU/Speicher, Uptime) anlegt.
+
+### Neustart über die WebUI
+Unter Einstellungen und Firmware gibt es den Button "Modul neu starten", sodass die Stromversorgung dafür nicht mehr getrennt werden muss. Die Funktion steht auch als `POST /reboot.json` zur Verfügung und benötigt wie die Einstellungen die Anmeldung (Header `Authorization: Token <token>`, siehe `/login.json`). Nach dem Neustart muss die CCU Software ebenfalls neu gestartet werden.
 
 ### Bekannte Einschränkungen
 * Nach einem Neustart der Platine (z.B. bei Stromausfall) findet kein automatischer Reconnect statt, in diesem Fall muss die CCU Software daher neu gestartet werden.

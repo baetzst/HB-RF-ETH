@@ -25,6 +25,9 @@
 #include "esp_log.h"
 #include "cJSON.h"
 #include "esp_ota_ops.h"
+#include "esp_timer.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "mbedtls/md.h"
 #include "mbedtls/base64.h"
 
@@ -186,6 +189,10 @@ esp_err_t get_sysinfo_json_handler_func(httpd_req_t *req)
     cJSON_AddStringToObject(sysinfo, "serial", _sysInfo->getSerialNumber());
     cJSON_AddStringToObject(sysinfo, "currentVersion", _sysInfo->getCurrentVersion());
     cJSON_AddStringToObject(sysinfo, "latestVersion", _updateCheck->getLatestVersion());
+
+    cJSON_AddNumberToObject(sysinfo, "uptime", (double)(esp_timer_get_time() / 1000000LL));
+    cJSON_AddStringToObject(sysinfo, "resetReason", _sysInfo->getResetReason());
+    cJSON_AddNumberToObject(sysinfo, "bootCount", (double)_sysInfo->getBootCount());
 
     cJSON_AddNumberToObject(sysinfo, "memoryUsage", _sysInfo->getMemoryUsage());
     cJSON_AddNumberToObject(sysinfo, "cpuUsage", _sysInfo->getCpuUsage());
@@ -437,6 +444,35 @@ httpd_uri_t post_settings_json_handler = {
     .handler = post_settings_json_handler_func,
     .user_ctx = NULL};
 
+// Restarts the module, so that changed settings or a new firmware take effect
+// without having to unplug the power supply.
+esp_err_t post_reboot_json_handler_func(httpd_req_t *req)
+{
+    if (validate_auth(req) != ESP_OK)
+    {
+        httpd_resp_set_status(req, "401 Not authorized");
+        httpd_resp_sendstr(req, "401 Not authorized");
+        return ESP_OK;
+    }
+
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_sendstr(req, "{\"success\":true}");
+
+    ESP_LOGW(TAG, "Restart requested through the WebUI");
+
+    // give the TCP stack some time to deliver the response
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+    _sysInfo->restart();
+
+    return ESP_OK;
+}
+
+httpd_uri_t post_reboot_json_handler = {
+    .uri = "/reboot.json",
+    .method = HTTP_POST,
+    .handler = post_reboot_json_handler_func,
+    .user_ctx = NULL};
+
 #define OTA_CHECK(a, str, ...)                                                    \
     do                                                                            \
     {                                                                             \
@@ -566,6 +602,7 @@ void WebUI::start()
         httpd_register_uri_handler(_httpd_handle, &get_api_status_handler);
         httpd_register_uri_handler(_httpd_handle, &get_settings_json_handler);
         httpd_register_uri_handler(_httpd_handle, &post_settings_json_handler);
+        httpd_register_uri_handler(_httpd_handle, &post_reboot_json_handler);
         httpd_register_uri_handler(_httpd_handle, &post_ota_update_handler);
 
         httpd_register_uri_handler(_httpd_handle, &main_1e43358e_js_gz_handler);

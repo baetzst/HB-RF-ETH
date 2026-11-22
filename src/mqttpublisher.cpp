@@ -260,6 +260,8 @@ void MqttPublisher::publishDiscovery()
     publishDiscoveryEntity("sensor", "cpu_usage", "CPU usage", "{{ value_json.device.cpuUsage }}", "%", NULL, "measurement", true, "mdi:cpu-32-bit");
     publishDiscoveryEntity("sensor", "memory_usage", "Memory usage", "{{ value_json.device.memoryUsage }}", "%", NULL, "measurement", true, "mdi:memory");
     publishDiscoveryEntity("sensor", "uptime", "Uptime", "{{ value_json.device.uptime }}", "s", "duration", NULL, true, NULL);
+    publishDiscoveryEntity("sensor", "reset_reason", "Reset reason", "{{ value_json.device.resetReason }}", NULL, NULL, NULL, true, "mdi:restart-alert");
+    publishDiscoveryEntity("sensor", "boot_count", "Boot count", "{{ value_json.device.bootCount }}", NULL, NULL, "total_increasing", true, "mdi:counter");
     publishDiscoveryEntity("sensor", "ip_address", "IP address", "{{ value_json.device.ipAddress }}", NULL, NULL, NULL, true, "mdi:ip");
     publishDiscoveryEntity("sensor", "firmware_version", "Firmware version", "{{ value_json.device.firmwareVersion }}", NULL, NULL, NULL, true, "mdi:chip");
     publishDiscoveryEntity("sensor", "latest_firmware_version", "Latest firmware version", "{{ value_json.device.latestFirmwareVersion }}", NULL, NULL, NULL, true, "mdi:update");

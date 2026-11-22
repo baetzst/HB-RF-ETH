@@ -23,6 +23,10 @@
 #include "esp_ota_ops.h"
 #include "esp_log.h"
 #include "esp_adc_cal.h"
+#include "esp_attr.h"
+#include "esp_system.h"
+#include "nvs.h"
+#include "nvs_flash.h"
 #include "pins.h"
 
 #define DEFAULT_VREF 1100
@@ -33,6 +37,60 @@ static double _cpuUsage;
 static char _serial[13];
 static const char *_currentVersion;
 static board_type_t _board;
+static const char *_resetReason = "unknown";
+static uint32_t _bootCount = 0;
+
+// RTC memory survives a software reset, but not a power cycle. It is used to
+// tell a restart requested through the WebUI apart from any other software reset.
+#define RESTART_REQUEST_MAGIC 0x48425245UL
+static RTC_NOINIT_ATTR uint32_t _restartRequest;
+
+static const char *resetReasonToString(esp_reset_reason_t reason)
+{
+    switch (reason)
+    {
+    case ESP_RST_POWERON:
+        return "poweron";
+    case ESP_RST_EXT:
+        return "external";
+    case ESP_RST_SW:
+        return "software";
+    case ESP_RST_PANIC:
+        return "panic";
+    case ESP_RST_INT_WDT:
+        return "int_wdt";
+    case ESP_RST_TASK_WDT:
+        return "task_wdt";
+    case ESP_RST_WDT:
+        return "wdt";
+    case ESP_RST_DEEPSLEEP:
+        return "deepsleep";
+    case ESP_RST_BROWNOUT:
+        return "brownout";
+    case ESP_RST_SDIO:
+        return "sdio";
+    default:
+        return "unknown";
+    }
+}
+
+static uint32_t incrementBootCount()
+{
+    uint32_t count = 0;
+    nvs_handle_t handle;
+
+    // NVS is initialized by Settings, which is created before SysInfo
+    if (nvs_open("sysinfo", NVS_READWRITE, &handle) == ESP_OK)
+    {
+        nvs_get_u32(handle, "bootCount", &count);
+        count++;
+        nvs_set_u32(handle, "bootCount", count);
+        nvs_commit(handle);
+        nvs_close(handle);
+    }
+
+    return count;
+}
 
 void updateCPUUsageTask(void *arg)
 {
@@ -134,6 +192,21 @@ SysInfo::SysInfo()
     _currentVersion = esp_ota_get_app_description()->version;
 
     _board = detectBoard();
+
+    esp_reset_reason_t reason = esp_reset_reason();
+    if (reason == ESP_RST_SW && _restartRequest == RESTART_REQUEST_MAGIC)
+    {
+        _resetReason = "webui";
+    }
+    else
+    {
+        _resetReason = resetReasonToString(reason);
+    }
+    _restartRequest = 0;
+
+    _bootCount = incrementBootCount();
+
+    ESP_LOGI(TAG, "Reset reason: %s, boot count: %u", _resetReason, _bootCount);
 }
 
 double SysInfo::getCpuUsage()
@@ -162,4 +235,20 @@ board_type_t SysInfo::getBoardType()
 const char *SysInfo::getCurrentVersion()
 {
     return _currentVersion;
+}
+
+const char *SysInfo::getResetReason()
+{
+    return _resetReason;
+}
+
+uint32_t SysInfo::getBootCount()
+{
+    return _bootCount;
+}
+
+void SysInfo::restart()
+{
+    _restartRequest = RESTART_REQUEST_MAGIC;
+    esp_restart();
 }

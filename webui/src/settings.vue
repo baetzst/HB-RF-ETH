@@ -1,4 +1,5 @@
 <template>
+  <div>
   <b-card
     :header="$t('title')"
     header-tag="h6"
@@ -219,10 +220,14 @@
       </b-form-group>
     </b-form>
   </b-card>
+  <reboot></reboot>
+  </div>
 </template>
 
 <script>
 import Vue from "vue";
+
+import Reboot from "./reboot.vue";
 
 import Vuelidate from "vuelidate";
 Vue.use(Vuelidate);
@@ -278,6 +283,9 @@ import { AlertPlugin } from "bootstrap-vue/esm/components/alert";
 Vue.use(AlertPlugin);
 
 export default {
+  components: {
+    Reboot
+  },
   name: "Settings",
   data() {
     return {

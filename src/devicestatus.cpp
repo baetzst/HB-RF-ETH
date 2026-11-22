@@ -120,6 +120,8 @@ cJSON *DeviceStatus::toJson()
     cJSON_AddStringToObject(device, "firmwareVersion", _sysInfo->getCurrentVersion());
     cJSON_AddStringToObject(device, "latestFirmwareVersion", _updateCheck->getLatestVersion());
     cJSON_AddNumberToObject(device, "uptime", (double)(esp_timer_get_time() / 1000000LL));
+    cJSON_AddStringToObject(device, "resetReason", _sysInfo->getResetReason());
+    cJSON_AddNumberToObject(device, "bootCount", (double)_sysInfo->getBootCount());
     cJSON_AddNumberToObject(device, "cpuUsage", round2(_sysInfo->getCpuUsage()));
     cJSON_AddNumberToObject(device, "memoryUsage", round2(_sysInfo->getMemoryUsage()));
 

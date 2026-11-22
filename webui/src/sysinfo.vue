@@ -10,6 +10,15 @@
       <b-form-group :label="$t('serial')" label-cols-sm="4">
         <b-form-input type="text" v-model="this.$store.state.sysInfo.serial" disabled></b-form-input>
       </b-form-group>
+      <b-form-group :label="$t('uptime')" label-cols-sm="4">
+        <b-form-input type="text" :value="uptimeText" disabled></b-form-input>
+      </b-form-group>
+      <b-form-group :label="$t('resetReason')" label-cols-sm="4">
+        <b-form-input type="text" :value="resetReasonText" disabled></b-form-input>
+      </b-form-group>
+      <b-form-group :label="$t('bootCount')" label-cols-sm="4">
+        <b-form-input type="text" :value="this.$store.state.sysInfo.bootCount" disabled></b-form-input>
+      </b-form-group>
       <b-form-group :label="$t('cpuUsage')" label-cols-sm="4">
         <b-progress max="100" height="2.25rem" class="form-control p-0">
           <b-progress-bar
@@ -77,6 +86,23 @@ export default {
   data() {
     return {};
   },
+  computed: {
+    uptimeText() {
+      var total = this.$store.state.sysInfo.uptime;
+      var days = Math.floor(total / 86400);
+      var hours = Math.floor((total % 86400) / 3600);
+      var minutes = Math.floor((total % 3600) / 60);
+      var seconds = total % 60;
+      var text = hours + "h " + minutes + "m " + seconds + "s";
+      return days > 0 ? days + "d " + text : text;
+    },
+    resetReasonText() {
+      var reason = this.$store.state.sysInfo.resetReason;
+      if (!reason) return "";
+      var key = "resetReasons." + reason;
+      return this.$te(key) ? this.$t(key) : reason;
+    }
+  },
   created() {
     var self = this;
     this.updateTimer = setInterval(() => {
@@ -93,6 +119,23 @@ export default {
       de: {
         title: "Systeminformationen",
         serial: "Seriennummer",
+        uptime: "Laufzeit",
+        resetReason: "Grund des letzten Neustarts",
+        bootCount: "Anzahl Neustarts",
+        resetReasons: {
+          poweron: "Stromversorgung eingeschaltet",
+          brownout: "Spannungseinbruch (Brownout)",
+          panic: "Absturz der Firmware (Panic)",
+          int_wdt: "Interrupt Watchdog",
+          task_wdt: "Task Watchdog",
+          wdt: "Watchdog",
+          software: "Software-Neustart",
+          webui: "Neustart über die WebUI",
+          external: "Reset-Pin",
+          deepsleep: "Deep Sleep",
+          sdio: "SDIO",
+          unknown: "Unbekannt"
+        },
         cpuUsage: "CPU Auslastung",
         memoryUsage: "Speicherauslastung",
         rawUartRemoteAddress: "Verbunden mit",
@@ -105,6 +148,23 @@ export default {
       en: {
         title: "System information",
         serial: "Serial number",
+        uptime: "Uptime",
+        resetReason: "Last reset reason",
+        bootCount: "Boot count",
+        resetReasons: {
+          poweron: "Power on",
+          brownout: "Brownout",
+          panic: "Firmware crash (panic)",
+          int_wdt: "Interrupt watchdog",
+          task_wdt: "Task watchdog",
+          wdt: "Watchdog",
+          software: "Software restart",
+          webui: "Restart through the WebUI",
+          external: "Reset pin",
+          deepsleep: "Deep sleep",
+          sdio: "SDIO",
+          unknown: "Unknown"
+        },
         cpuUsage: "CPU usage",
         memoryUsage: "Memory usage",
         rawUartRemoteAddress: "Connected with",
